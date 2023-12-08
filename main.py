@@ -1,16 +1,19 @@
 import matplotlib.pyplot as plt
 import scipy.optimize as opt
 
+e = 2.7182818284590452353602874713527
+
 
 def get_log_fit(bins, data, data_err):
     def log_func(x, a, b, c):
-        return a * x ** b + c
+        return a * e**(-b * x) + c
 
-    popt, pcov = opt.curve_fit(log_func, bins, data, sigma=data_err)
+    p0 = (1000, 1, 0)
+    popt, pcov = opt.curve_fit(log_func, bins, data, sigma=data_err, p0=p0)
     binsnew = []
     for x in range(int(max(bins))+1):
         binsnew.append(x)
-    return (binsnew, log_func(binsnew, *popt)), popt
+    return (binsnew, [log_func(binsnew[x], *popt) for x in range(len(binsnew))]), popt
 
 
 def import_data(filename):
@@ -40,13 +43,17 @@ def graph(bins, data, log=False):
         if key != 'NAME':
             plt.plot(bins[500:700], data[key][500:700], label=key)
     plt.legend(title=f"{data['NAME']} depth [mm]", fontsize=5)
-    plt.title(f"{data['NAME']} Attenuation with varying material depth")
     if log:
         plt.yscale('log')
+        plt.title(f"{data['NAME']} Attenuation with varying material depth (log)")
     else:
         plt.yscale('linear')
+        plt.title(f"{data['NAME']} Attenuation with varying material depth (linear)")
     plt.ylim(ymin=0)
-    plt.savefig(f"./{data['NAME']}.png")
+    if log:
+        plt.savefig(f"./{data['NAME']}_log.png")
+    else:
+        plt.savefig(f"./{data['NAME']}_linear.png")
     plt.clf()
 
 
@@ -63,16 +70,20 @@ def graph_peak_counts_vs_depth(data, log=False):
         plt.xlabel("Depth [mm]")
         plt.ylabel("Counts")
         plt.plot(depth, peaks)
-        plt.plot(*fit_data, label=f"Fit: {round(popt[0], 6)}x^{round(popt[1], 6)} + {round(popt[2], 6)}")
+        plt.plot(*fit_data, label=f"Fit: {round(popt[0], 6)}exp[{round(popt[1], 6)}*x] + {round(popt[2], 6)}")
         plt.errorbar(depth, peaks, yerr=peaks_err)
         if log:
             plt.yscale('log')
+            plt.title(f"{data['NAME']} Peak Count vs Depth (log)")
         else:
             plt.yscale('linear')
-        plt.title(f"{data['NAME']} Peak Count vs Depth")
+            plt.title(f"{data['NAME']} Peak Count vs Depth (linear)")
         plt.ylim(ymin=0)
         plt.legend(fontsize=5)
-        plt.savefig(f"./{data['NAME']}_attenuation.png")
+        if log:
+            plt.savefig(f"./{data['NAME']}_attenuation_log.png")
+        else:
+            plt.savefig(f"./{data['NAME']}_attenuation_linear.png")
         plt.clf()
 
 
@@ -99,7 +110,9 @@ if __name__ == "__main__":
     }
 
     plot_and_peaks(Pb, log=True)
+    plot_and_peaks(Pb, log=False)
     graph_peak_counts_vs_depth(Pb, log=True)
+    graph_peak_counts_vs_depth(Pb, log=False)
 
     Al = {
         "NAME": "Al",
@@ -122,7 +135,9 @@ if __name__ == "__main__":
     }
 
     plot_and_peaks(Al, log=True)
+    plot_and_peaks(Al, log=False)
     graph_peak_counts_vs_depth(Al, log=True)
+    graph_peak_counts_vs_depth(Al, log=False)
 
     Steel = {
         "NAME": "Steel",
@@ -142,7 +157,9 @@ if __name__ == "__main__":
     }
 
     plot_and_peaks(Steel, log=True)
+    plot_and_peaks(Steel, log=False)
     graph_peak_counts_vs_depth(Steel, log=True)
+    graph_peak_counts_vs_depth(Steel, log=False)
 
     W = {
         "NAME": "W",
@@ -162,4 +179,6 @@ if __name__ == "__main__":
     }
 
     plot_and_peaks(W, log=True)
+    plot_and_peaks(W, log=False)
     graph_peak_counts_vs_depth(W, log=True)
+    graph_peak_counts_vs_depth(W, log=False)
