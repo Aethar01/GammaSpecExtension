@@ -3,8 +3,8 @@ import scipy.optimize as opt
 
 
 def get_log_fit(bins, data, data_err):
-    def log_func(x, a, c):
-        return a * x + c
+    def log_func(x, a, b, c):
+        return a * x ** b + c
 
     popt, pcov = opt.curve_fit(log_func, bins, data, sigma=data_err)
     binsnew = []
