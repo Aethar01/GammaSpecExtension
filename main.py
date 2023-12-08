@@ -33,7 +33,7 @@ def writedata(data):
                 f.write(f"{key}: {str(max(data[key][500:700]))} \n")
 
 
-def graph(bins, data):
+def graph(bins, data, log=False):
     plt.xlabel("Energy [keV]")
     plt.ylabel("Counts")
     for key in data:
@@ -41,13 +41,16 @@ def graph(bins, data):
             plt.plot(bins[500:700], data[key][500:700], label=key)
     plt.legend(title=f"{data['NAME']} depth [mm]", fontsize=5)
     plt.title(f"{data['NAME']} Attenuation with varying material depth")
-    plt.yscale('log')
+    if log:
+        plt.yscale('log')
+    else:
+        plt.yscale('linear')
     plt.ylim(ymin=0)
     plt.savefig(f"./{data['NAME']}.png")
     plt.clf()
 
 
-def graph_peak_counts_vs_depth(data):
+def graph_peak_counts_vs_depth(data, log=False):
     with open(f'./peaks_for_{data["NAME"]}.txt', 'r') as f:
         lines = f.readlines()
         depth = []
@@ -62,7 +65,10 @@ def graph_peak_counts_vs_depth(data):
         plt.plot(depth, peaks)
         plt.plot(*fit_data, label=f"Fit: {round(popt[0], 6)}x^{round(popt[1], 6)} + {round(popt[2], 6)}")
         plt.errorbar(depth, peaks, yerr=peaks_err)
-        plt.yscale('log')
+        if log:
+            plt.yscale('log')
+        else:
+            plt.yscale('linear')
         plt.title(f"{data['NAME']} Peak Count vs Depth")
         plt.ylim(ymin=0)
         plt.legend(fontsize=5)
@@ -70,12 +76,12 @@ def graph_peak_counts_vs_depth(data):
         plt.clf()
 
 
-def plot_and_peaks(data):
+def plot_and_peaks(data, log=False):
     bins = calibrate(data["0"])
 
     writedata(data)
 
-    graph(bins, data)
+    graph(bins, data, log=log)
 
 
 if __name__ == "__main__":
@@ -92,8 +98,8 @@ if __name__ == "__main__":
         "10.01": import_data("./ExtensionData/pb8mm.dat"),
     }
 
-    plot_and_peaks(Pb)
-    graph_peak_counts_vs_depth(Pb)
+    plot_and_peaks(Pb, log=True)
+    graph_peak_counts_vs_depth(Pb, log=True)
 
     Al = {
         "NAME": "Al",
@@ -115,8 +121,8 @@ if __name__ == "__main__":
         "90": import_data("./ExtensionData/Al15.dat"),
     }
 
-    plot_and_peaks(Al)
-    graph_peak_counts_vs_depth(Al)
+    plot_and_peaks(Al, log=True)
+    graph_peak_counts_vs_depth(Al, log=True)
 
     Steel = {
         "NAME": "Steel",
@@ -135,8 +141,8 @@ if __name__ == "__main__":
         "69": import_data("./ExtensionData/Steel12.dat"),
     }
 
-    plot_and_peaks(Steel)
-    graph_peak_counts_vs_depth(Steel)
+    plot_and_peaks(Steel, log=True)
+    graph_peak_counts_vs_depth(Steel, log=True)
 
     W = {
         "NAME": "W",
@@ -155,5 +161,5 @@ if __name__ == "__main__":
         "6.35": import_data("./ExtensionData/W12.dat"),
     }
 
-    plot_and_peaks(W)
-    graph_peak_counts_vs_depth(W)
+    plot_and_peaks(W, log=True)
+    graph_peak_counts_vs_depth(W, log=True)
