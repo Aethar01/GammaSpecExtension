@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import scipy.optimize as opt
+import numpy as np
 
 e = 2.7182818284590452353602874713527
 
@@ -70,7 +71,7 @@ def graph_peak_counts_vs_depth(data, log=False):
         plt.xlabel("Depth [mm]")
         plt.ylabel("Counts")
         plt.plot(depth, peaks)
-        plt.plot(*fit_data, label=f"Fit: {round(popt[0], 6)}exp[{round(popt[1], 6)}*x] + {round(popt[2], 6)}")
+        plt.plot(*fit_data, label=f"Fit: {round(popt[0], 6)}exp[-{round(popt[1], 6)}*x] + {round(popt[2], 6)}")
         plt.errorbar(depth, peaks, yerr=peaks_err)
         if log:
             plt.yscale('log')
@@ -79,12 +80,13 @@ def graph_peak_counts_vs_depth(data, log=False):
             plt.yscale('linear')
             plt.title(f"{data['NAME']} Peak Count vs Depth (linear)")
         plt.ylim(ymin=0)
-        plt.legend(fontsize=5)
+        plt.legend(fontsize=10)
         if log:
             plt.savefig(f"./{data['NAME']}_attenuation_log.png")
         else:
             plt.savefig(f"./{data['NAME']}_attenuation_linear.png")
         plt.clf()
+        return popt[1]
 
 
 def plot_and_peaks(data, log=False):
@@ -95,7 +97,32 @@ def plot_and_peaks(data, log=False):
     graph(bins, data, log=log)
 
 
+def plot_attenuation(attenfits):
+    plt.xlabel("Depth [mm]")
+    plt.ylabel("Proportion of Original Counts (log)")
+    for key in attenfits:
+        def expression(x):
+            return e ** (-attenfits[key]*x)
+        x_range = np.linspace(0, 1000, 10000)
+        plt.plot(x_range, [expression(x) for x in x_range], label=f"{key}: -{round(attenfits[key], 6)}")
+    # plt.ylim(ymin=0,)
+    # plt.xlim(xmin=-50, xmax=50)
+    plt.yscale('log')
+    plt.legend(title="Material Attenuation Coefficient", fontsize=5)
+    plt.title("Proportion of Original Counts vs Material Depth (log)")
+    plt.savefig("./Attenuation_Coefficient.png")
+    plt.clf()
+
+
 if __name__ == "__main__":
+
+    attenfits = {
+            "Pb": None,
+            "Al": None,
+            "Steel": None,
+            "W": None,
+            }
+
     Pb = {
         "NAME": "Pb",
         "0": import_data("./ExtensionData/22Na.dat"),
@@ -111,8 +138,8 @@ if __name__ == "__main__":
 
     plot_and_peaks(Pb, log=True)
     plot_and_peaks(Pb, log=False)
-    graph_peak_counts_vs_depth(Pb, log=True)
-    graph_peak_counts_vs_depth(Pb, log=False)
+    _ = graph_peak_counts_vs_depth(Pb, log=True)
+    attenfits["Pb"] = graph_peak_counts_vs_depth(Pb, log=False)
 
     Al = {
         "NAME": "Al",
@@ -136,8 +163,8 @@ if __name__ == "__main__":
 
     plot_and_peaks(Al, log=True)
     plot_and_peaks(Al, log=False)
-    graph_peak_counts_vs_depth(Al, log=True)
-    graph_peak_counts_vs_depth(Al, log=False)
+    _ = graph_peak_counts_vs_depth(Al, log=True)
+    attenfits["Al"] = graph_peak_counts_vs_depth(Al, log=False)
 
     Steel = {
         "NAME": "Steel",
@@ -158,8 +185,8 @@ if __name__ == "__main__":
 
     plot_and_peaks(Steel, log=True)
     plot_and_peaks(Steel, log=False)
-    graph_peak_counts_vs_depth(Steel, log=True)
-    graph_peak_counts_vs_depth(Steel, log=False)
+    _ = graph_peak_counts_vs_depth(Steel, log=True)
+    attenfits["Steel"] = graph_peak_counts_vs_depth(Steel, log=False)
 
     W = {
         "NAME": "W",
@@ -180,5 +207,7 @@ if __name__ == "__main__":
 
     plot_and_peaks(W, log=True)
     plot_and_peaks(W, log=False)
-    graph_peak_counts_vs_depth(W, log=True)
-    graph_peak_counts_vs_depth(W, log=False)
+    _ = graph_peak_counts_vs_depth(W, log=True)
+    attenfits["W"] = graph_peak_counts_vs_depth(W, log=False)
+
+    plot_attenuation(attenfits)
